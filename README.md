@@ -16,10 +16,6 @@ Also tried to use "Normal Epipolar constraint Loss" and "Probabilistic Normal Ep
 
 
 
-
-Please contact Prune Truong (prune.truong@vision.ee.ethz.ch) if you have any questions!
-
-
 We provide PyTorch code for all experiments: BARF/SPARF for joint pose-NeRF training, NeRF/SPARF when considering fixed ground-truth poses as input.
 
 ## I. Running the code
