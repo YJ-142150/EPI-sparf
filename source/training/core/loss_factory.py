@@ -20,6 +20,7 @@ from typing import Any, Optional
 from source.training.core.base_losses import (Loss, SparseCOLMAPDepthLoss, BasePhotoandReguLoss)
 from source.training.core.corres_loss import CorrespondencesPairRenderDepthAndGet3DPtsAndReproject
 from source.training.core.depth_cons_loss import DepthConsistencyLoss
+from source.training.core.epipolar_loss import CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar
 
 
 def define_loss(loss_type: str, opt: Dict[str, Any], nerf_net: torch.nn.Module, 
@@ -31,8 +32,11 @@ def define_loss(loss_type: str, opt: Dict[str, Any], nerf_net: torch.nn.Module,
     
     if 'SparseCOLMAPDepthLoss' in loss_type:
         loss_module.append(SparseCOLMAPDepthLoss(opt, nerf_net, device=device))
-        
-    if 'corres' in loss_type:
+    
+    if 'epipolar' in loss_type:
+        loss_module.append(CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar\
+                               (opt, nerf_net, flow_net=flow_net, train_data=train_data, device=device))
+    elif 'corres' in loss_type:
         loss_module.append(CorrespondencesPairRenderDepthAndGet3DPtsAndReproject\
             (opt, nerf_net, flow_net=flow_net, train_data=train_data, device=device))   
 

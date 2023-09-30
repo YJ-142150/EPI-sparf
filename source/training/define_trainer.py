@@ -74,7 +74,7 @@ def define_trainer(args: Dict[str, Any], settings_model: Dict[str, Any],
                 settings_model.max_iter = 220000
 
     if settings_model.dataset == 'dtu':
-        settings_model.seed = int(settings_model.scene.split('scan')[-1])
+        settings_model.seed = int(settings_model.scene.split('scan')[-1]) -2
         
     if debug:
         settings_model.vis_steps = 2    # visualize results (every N iterations)

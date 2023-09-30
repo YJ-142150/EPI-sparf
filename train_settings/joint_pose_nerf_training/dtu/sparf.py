@@ -53,7 +53,7 @@ def get_config():
     settings_model.flow_backbone='PDCNet'  #choose from PDCNet, GLUNet, PWCNet
 
     # loss type
-    settings_model.loss_type = 'photometric_and_corres_and_depth_cons'
+    settings_model.loss_type ='photometric_and_epipolar_and_depth_cons' #'photometric_and_corres_and_depth_cons'
     settings_model.matching_pair_generation = 'all_to_all'
 
     # reduce correspondences
@@ -63,6 +63,7 @@ def get_config():
 
     settings_model.loss_weight = edict()                                               
     settings_model.loss_weight.render = 0.    
+    settings_model.loss_weight.epipolar = -3. # for 10^
     settings_model.loss_weight.corres = -3. # for 10^
     settings_model.loss_weight.depth_cons = -3
     return override_options(default_config, settings_model)

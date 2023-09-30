@@ -1,24 +1,19 @@
-# SPARF: Neural Radiance Fields from Sparse and Noisy Poses
-
-*This is not an officially supported Google product.*
+# EPI-SPARF
 
 This repository contains the code for the paper:
-[SPARF: Neural Radiance Fields from Sparse and Noisy Poses](https://arxiv.org/abs/2211.11738). In CVPR, 2023 (Highlight). 
+[SPARF: Neural Radiance Fields from Sparse and Noisy Poses](https://arxiv.org/abs/2211.11738). In CVPR, 2023 (Highlight).
 
-Authors: [Prune Truong](https://prunetruong.com/),
-[Marie-Julie Rakotosaona](http://www.lix.polytechnique.fr/Labo/Marie-Julie.RAKOTOSAONA/),
-[Fabian Manhardt](https://campar.in.tum.de/Main/FabianManhardt),
-and [Federico Tombari](https://federicotombari.github.io/)   
+![](docs/epi-sparf.png)
 
+Implemented "epipolar constraint Loss" to handle pose-estimation noise in the training of NeRF.
 
-\[[arXiv preprint](https://arxiv.org/abs/2211.11738)\]
-\[[Website](https://prunetruong.com/sparf.github.io/)\]
-\[[Youtube teaser](https://www.youtube.com/watch?v=ARMKrcJlULE)\]
+Based on SPARF which handles few shot & noisy pose estimation.
+
+Also tried to use "Normal Epipolar constraint Loss" and "Probabilistic Normal Epipolar constraint Loss"
 
 
-Our approach SPARF produces realistic novel-view rendering given as few as 2 or 3 input images, with noisy camera poses. We add two novel constraints into the pose-NeRF optimization: the multi-view correspondence loss and the depth-consistency loss. 
+![](docs/epipolar.png)
 
-![](docs/sparf_method.jpg)
 
 
 
@@ -26,124 +21,6 @@ Please contact Prune Truong (prune.truong@vision.ee.ethz.ch) if you have any que
 
 
 We provide PyTorch code for all experiments: BARF/SPARF for joint pose-NeRF training, NeRF/SPARF when considering fixed ground-truth poses as input.
-
-
---------------------------------------
-## Citation
-
-If you find our code useful for your research, please cite
-```
-@inproceedings{sparf2023,
-  title={SPARF: Neural Radiance Fields from Sparse and Noisy Poses},
-  author = {Truong, Prune and Rakotosaona, Marie-Julie and Manhardt, Fabian and Tombari, Federico},
-  publisher = {{IEEE/CVF} Conference on Computer Vision and Pattern Recognition, {CVPR}},
-  year = {2023}
-}
-```
-
---------------------------------------
-
-## Installation
-
-This code is developed with Python3 (`python3`) with Cuda 11.3. All models were trained on single A100 (or V100) GPU with 20GB of memory. This code does NOT support multi-GPU training. 
-Please use the following command for installation. 
-
-* It is recommended to use [Anaconda](https://www.anaconda.com/products/individual) to set up the environment. Install the dependencies and activate the environment `sparf-env` with
-```bash
-conda create -n sparf-env python=3
-conda activate sparf-env
-pip install -r requirements.txt
-```
-For the specific versions of the packages used to develop this model, run the following instead. 
-```bash
-pip install -r requirements_w_version.txt
-```
-
-* Make sure to the dependencies of the submodules are downloaded. Everything should be included in the provided requirement file, except for cupy:
-We use [PDC-Net](https://arxiv.org/abs/2101.01710) to extract correspondences between the views, for which CuPy is a required dependency. It can be installed using pip install cupy or alternatively using one of the provided binary packages as outlined in the CuPy repository. For another CUDA version, change accordingly.
-```bash
-pip install cupy-cuda113 --no-cache-dir 
-```
-
-* Initialize the external submodule dependencies with
-```bash
-git submodule update --init --recursive
-git submodule update --recursive --remote
-```
-
-* Optional: The submodule contains lots of unnecessary files. You can suppress them by running
-```bash
-bash third_party/remove_unused_files.sh
-```
-
-* Create source/admin/local.py by running the following command and update the paths to the datasets and workdirs. 
-We provide an example admin/local_example.py where all datasets are stored in data/. 
-```bash
-python -c "from source.admin.environment import create_default_local_file; create_default_local_file()"
-```
-
-* Download the pre-trained model of [PDC-Net](https://arxiv.org/abs/2101.01710) [here](https://drive.google.com/file/d/1nOpC0MFWNV8N6ue0csed4I2K_ffX64BL/view). You will need to change the path to the pre-trained model in [train_settings/default_config.py](https://github.com/google-research/sparf/blob/main/train_settings/default_config.py#L190) `cfg.flow_ckpt_path` (L.190). 
-
-<details>
-  <summary><b>Make sure the correspondence network is installed and running correctly</b></summary>
-
-Run the following command
-```bash
-python third_party/test_pdcnet_installation.py
-```
-You should obtain the following image as third_party/test_pdcnet.png
-
-![](docs/test_pdcnet.png)
-
-
-</details>
-
---------------------------------------
-
-## Datasets
-
-
-<details>
-  <summary><b>DTU</b></summary>
-
-* Images: We use the DTU dataset, processed by PixelNeRF, where the images are processed and resized to 300 x 400.
-Download the data [here](https://drive.google.com/drive/folders/1PsT3uKwqHHD2bEEHkIXB99AlIjtmrEiR?usp=sharing). 
-
-* Mask Data: For evaluation, we report also masked metrics. For this, we use the object masks provided by DVR, IDR and RegNeRF. [RegNeRF](https://github.com/google-research/google-research/tree/master/regnerf) provides the full mask data (for the test splits), which you can download [here](https://drive.google.com/file/d/1Yt5T3LJ9DZDiHbtd9PDFNHqJAd7wt-_E/view?usp=sharing). 
-
-* Ground-truth depth maps: For evaluation, we report the depth error. For this, we download the [depth maps](https://virutalbuy-public.oss-cn-hangzhou.aliyuncs.com/share/cascade-stereo/CasMVSNet/dtu_data/dtu_train_hr/Depths_raw.zip). They are extracted from [MVSNeRF](https://github.com/apchenstu/mvsnerf#:~:text=training%20data%20and-,Depth_raw,-from%20original%20MVSNet).  
-
-</details>
-
-
-<details>
-  <summary><b>LLFF</b></summary>
-
-The LLFF real-world data can be found in the [NeRF Google Drive](https://drive.google.com/drive/folders/128yBriW1IG_3NJ5Rp7APSTZsJqdJdfc1).
-For convenience, you can download them with the following script: (under this repo)
-```bash
-gdown --id 16VnMcF1KJYxN9QId6TClMsZRahHNMW5g # download nerf_llff_data.zip
-unzip nerf_llff_data.zip
-rm -f nerf_llff_data.zip
-mv nerf_llff_data data/llff
-```
-
-</details>
-
-<details>
-  <summary><b>Replica</b></summary>
-
-You can download the replica dataset with the following script:
-```bash
-# you can also download the Replica.zip manually through
-# link: https://caiyun.139.com/m/i?1A5Ch5C3abNiL password: v3fY (the zip is split into smaller zips because of the size limitation of caiyun)
-wget https://cvg-data.inf.ethz.ch/nice-slam/data/Replica.zip
-unzip Replica.zip
-  ```
-</details>
-
---------------------------------------
-
 
 ## I. Running the code
 
@@ -458,3 +335,17 @@ To add a new loss function, create a new class with a main function `compute_los
 This code is licensed under the Apache 2.0 License. See [LICENSE](https://github.com/google-research/sparf/blob/main/LICENSE) for more details.
 
 
+--------------------------------------
+## Citation
+
+If you find our code useful for your research, please cite
+```
+@inproceedings{sparf2023,
+  title={SPARF: Neural Radiance Fields from Sparse and Noisy Poses},
+  author = {Truong, Prune and Rakotosaona, Marie-Julie and Manhardt, Fabian and Tombari, Federico},
+  publisher = {{IEEE/CVF} Conference on Computer Vision and Pattern Recognition, {CVPR}},
+  year = {2023}
+}
+```
+
+--------------------------------------

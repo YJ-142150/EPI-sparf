@@ -187,7 +187,7 @@ def get_nerf_default_config_llff():
     cfg.pairing_angle_threshold = 45  # if matching_pair_generation is 'angle', acceptable angle between valid pairs
     
     cfg.flow_backbone='PDCNet' 
-    cfg.flow_ckpt_path='/home/jupyter/shared/pre_trained_models/PDCNet_megadepth.pth.tar'  # change
+    cfg.flow_ckpt_path= '/home/lambdasix/sparf/train_settings/pre_trained_models/PDCNet_megadepth.pth.tar' #'./pre_trained_models/PDCNet_megadepth.pth.tar'  # change
     cfg.use_homography_flow = False
     cfg.flow_batch_size = 5
 
