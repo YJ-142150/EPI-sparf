@@ -1,8 +1,5 @@
 # EPI-SPARF
 
-This repository contains the code for the paper:
-[SPARF: Neural Radiance Fields from Sparse and Noisy Poses](https://arxiv.org/abs/2211.11738). In CVPR, 2023 (Highlight).
-
 ![](docs/epi-sparf.png)
 
 Implemented "epipolar constraint Loss" to handle pose-estimation noise in the training of NeRF.
