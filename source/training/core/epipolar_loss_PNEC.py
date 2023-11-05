@@ -188,9 +188,9 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         epi_constraint=True
         if epi_constraint:
             
-            bearing_pixels_in_self = self.compute_bearing_vectors(self.opt, pixels_in_self, intr_self, pose_w2c_self[:3, :3]) # intr_self_inv)
+            bearing_pixels_in_self = self.compute_bearing_vectors(self.opt, pixels_in_self, intr_self, pose_w2c_self[:3, :3]) 
 
-            bearing_pixels_in_other = self.compute_bearing_vectors(self.opt, pixels_in_other,intr_other, pose_w2c_other[:3, :3]) #intr_other_inv)
+            bearing_pixels_in_other = self.compute_bearing_vectors(self.opt, pixels_in_other,intr_other, pose_w2c_other[:3, :3])
 
             residuals = self.energy_function_without_uncertainty(self.opt, pose_w2c_self, pose_w2c_other, bearing_pixels_in_self, bearing_pixels_in_other, conf_values)
             loss_epi = residuals 
@@ -303,17 +303,7 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
 
     def skewmat(self, opt, x_vec):
         '''
-        torch.matrix_exp(a)
-        Eigen::Matrix3f mat = Eigen::Matrix3f::Zero();
-
-        mat(0, 1) = -v[2]; mat(0, 2) = +v[1];
-        mat(1, 0) = +v[2]; mat(1, 2) = -v[0];
-        mat(2, 0) = -v[1]; mat(2, 1) = +v[0];
-
-        return mat;
-
-        input : (*, 3)
-        output : (*, 3, 3)
+        return skewmat;
         '''
 
         W_row0 = torch.tensor([0.,0.,0.,  0.,0.,1.,  0.,-1.,0.]).view(3,3).to(x_vec.device)
