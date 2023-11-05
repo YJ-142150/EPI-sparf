@@ -187,33 +187,13 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         # compute the epipolar loss
         epi_constraint=True
         if epi_constraint:
-            #E = self.compute_essential_matrix(self.opt, pose_w2c_self, pose_w2c_other)
-
-            #mean_x_self = pixels_in_self[:, 0].mean()
-            #mean_y_self = pixels_in_self[:, 1].mean()
-            #std_x_self = pixels_in_self[:, 0].std()
-            #std_y_self = pixels_in_self[:, 1].std()
-
-            #mean_x_other = pixels_in_other[:, 0].mean()
-            #mean_y_other = pixels_in_other[:, 1].mean()
-            #std_x_other = pixels_in_other[:, 0].std()
-            #std_y_other = pixels_in_other[:, 1].std()
-
-            #pixels_in_self[:, 0] = (pixels_in_self[:, 0]) / H #- mean_x_self) / std_x_self
-            #pixels_in_self[:, 1] = (pixels_in_self[:, 1]) / W # - mean_y_self) / std_y_self
-
-            #pixels_in_other[:, 0] = (pixels_in_other[:, 0]) / H # - mean_x_other) / std_x_other
-            #pixels_in_other[:, 1] = (pixels_in_other[:, 1]) / W # - mean_y_other) / std_y_other
-
-            #intr_self_inv = torch.inverse(intr_self)
+            
             bearing_pixels_in_self = self.compute_bearing_vectors(self.opt, pixels_in_self, intr_self, pose_w2c_self[:3, :3]) # intr_self_inv)
 
-            #intr_other_inv = torch.inverse(intr_other)
             bearing_pixels_in_other = self.compute_bearing_vectors(self.opt, pixels_in_other,intr_other, pose_w2c_other[:3, :3]) #intr_other_inv)
 
             residuals = self.energy_function_without_uncertainty(self.opt, pose_w2c_self, pose_w2c_other, bearing_pixels_in_self, bearing_pixels_in_other, conf_values)
-            loss_epi = residuals # * conf_values[:, 0] # -loss_epi_real
-            #print(conf_values[:,0])
+            loss_epi = residuals 
             Energy = torch.sum(loss_epi)
 
             loss_dict['epipolar'] += Energy
@@ -258,7 +238,6 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         t = t_other - torch.matmul(R, t_self)
 
         # Construct the essential matrix from R and t
-        #t_x = torch.array([[0, -t[2], t[1]], [t[2], 0, -t[0]], [-t[1], t[0], 0]])
         t = torch.tensor([t[0], t[1], t[2]], device='cuda:0')  # Assuming t is a list or array of length 3
         t_x = torch.zeros((3, 3))
         t_x[0, 1], t_x[0, 2], t_x[1, 0], t_x[1, 2], t_x[2, 0], t_x[2, 1] = -t[2], t[1], t[2], -t[0], -t[1], t[0]
@@ -278,40 +257,14 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         Returns:
         - bearing_vectors (torch.Tensor): the [N, 3] tensor containing N bearing vectors.
         """
-        # Homogenize pixel coordinates
-        #ones = torch.ones(pixel_coords.shape[0], 1, device='cuda:0')
-        #homogenized_pixels = torch.cat([pixel_coords, ones], dim=1)  # [N, 3]
 
-        # Convert pixel coordinates to camera coordinates
-        #cam_coords = torch.matmul(homogenized_pixels, K_inv.T)  # [N, 3]
-
-        # Normalize to get the bearing vectors
-        #norms = torch.norm(cam_coords, dim=1, keepdim=True)
-        #bearing_vectors = cam_coords / norms
-        # Convert to tensor if not already
-
-        #image_points = torch.tensor(pixel_coords, dtype=torch.float32)
-
-        # Append ones for homogeneous coordinates
-        #image_points_homogeneous = torch.cat([pixel_coords, torch.ones(pixel_coords.shape[0], 1, device='cuda:0')], dim=1)
         points = torch.cat([pixel_coords, torch.ones(pixel_coords.shape[0], 1, device='cuda:0')], dim=1)
-        # 1. Convert to normalized image plane
         K_inv = torch.inverse(torch.tensor(K, dtype=torch.float32))
-        #normalized_image_points = torch.matmul(K_inv, image_points_homogeneous.t()).t()[:,:2]
-
-        # 2. Convert to homogeneous coordinates (in camera frame)
-        #camera_coords = torch.cat([normalized_image_points, torch.ones(normalized_image_points.shape[0], 1,device='cuda:0')], dim=1)
-
-        # 3. Convert to world coordinates using the rotation matrix R
-        #world_coords = torch.matmul(torch.tensor(R, dtype=torch.float32), camera_coords.t()).t()
-
-        # 4. Normalize to get unit feature vectors in world coordinates
-        #unit_feature_vectors_world = world_coords / world_coords.norm(dim=1, keepdim=True)
 
         transformed_points = torch.einsum("...ij,...nj->...ni", K_inv, points)
         norms = torch.norm(transformed_points, dim=-1)
         transformed_points = transformed_points / norms[..., None]
-        return transformed_points #unit_feature_vectors_world #bearing_vectors
+        return transformed_points 
 
     def energy_function_without_uncertainty(self, opt, pose_w2c_self, pose_w2c_other, bearing_pixels_in_self, bearing_pixels_in_other, confidences):
         # Extracting rotation and translation from the poses
@@ -323,9 +276,7 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         # Compute relative rotation and translation between the two cameras
         R_rel = torch.matmul(R_other, R_self.T)
         t_rel = -torch.matmul(R_rel, t_self) + t_other
-        #unit_t_rel = t_rel / t_rel.norm(keepdim=True)
-        
-        #sigma_values = 1.0 - confidences
+
         cov_values = 1.0 / confidences
         cov_matrices = torch.zeros(512, 3, 3, device='cuda:0')
 
@@ -334,52 +285,18 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
 
         # Transform all bearing_pixels in the second image
         transformed_bearing_pixels_in_other = torch.matmul(R_rel, bearing_pixels_in_other.T).T
-        #print('transformed', transformed_bearing_pixels_in_other.size())
-        # Compute the cross products for all vectors at once
-        #cross_products = torch.cross(bearing_pixels_in_self, transformed_bearing_pixels_in_other)
+
         skew_bearing_pixels_in_self = self.skewmat(self.opt, bearing_pixels_in_self)
-        #print('skew', skew_bearing_pixels_in_self.size())
-        cross_product = torch.einsum('bij, bj -> bi', skew_bearing_pixels_in_self, transformed_bearing_pixels_in_other) #torch.matmul(skew_bearing_pixels_in_self, transformed_bearing_pixels_in_other)
-        #print('t_rel', t_rel.size())
-        #print('cross_product', cross_product.size())
-        #print(torch.einsum('i, bi -> b', t_rel, cross_product).size())
+        cross_product = torch.einsum('bij, bj -> bi', skew_bearing_pixels_in_self, transformed_bearing_pixels_in_other)
 
         fin = torch.einsum('i, bi -> b', t_rel, cross_product)
         # Compute the dot products for all residuals at once
-        residuals = fin ** 2 #torch.sum(fin ** 2)
-        #epi_zeros = torch.zeros_like(fin)
-        #residuals = torch.nn.functional.huber_loss(fin, epi_zeros, reduction='none', delta=1.)
+        residuals = fin ** 2 
         
-        #E = torch.sum(residuals)
-
-        # Compute the skew-symmetric matrices (외적 행렬) for bearing_pixels_in_self all at once
-       
-        # zero = torch.zeros(bearing_pixels_in_self.size(0), device='cuda:0') #.to(bearing_pixels_in_self.device)
-        '''f_hat_self = torch.stack([
-            zero, -bearing_pixels_in_self[:, 2], bearing_pixels_in_self[:, 1],
-            bearing_pixels_in_self[:, 2], zero, -bearing_pixels_in_self[:, 0],
-            -bearing_pixels_in_self[:, 1], bearing_pixels_in_self[:, 0], zero
-        ], dim=1).reshape(-1, 3, 3)'''
         f_hat_self = self.skewmat(self, bearing_pixels_in_self)
 
-        #Compute denominator for each residual
-        #temp = torch.matmul(torch.matmul(torch.matmul(t_rel.T.unsqueeze(0).expand_as(skew_matrices), skew_matrices), R_rel), sigmas)
-        #tiemp = torch.matmul(temp, skew_matrices.transpose(1, 2))
-
-        #denominators = torch.sum(temp * t_rel, dim=-1)
-        #denominator = torch.einsum('bi, bij, bjk, bkl, bl -> b', t_rel, f_hat_self, R_rel, sigmas, R_rel.T, f_hat_self.T, t_rel)
-        #print(t_rel.size())
-        #print(f_hat_self.size())
-        #print(R_rel.size())
-        #print(sigmas.size())
-        #denominator = torch.einsum('i, bij, jk, bkl, lm, bno, o -> b', t_rel, f_hat_self, R_rel, cov_matrices, R_rel.T, f_hat_self.T, t_rel)
         denominators = self.denominator(self.opt, t_rel, R_rel, f_hat_self, cov_matrices) ** 2
 
-        # Avoid zero denominators
-        #denominators = torch.where(denominators != 0, denominators, torch.ones_like(denominators))
-
-        # print('size of resi', residuals) #.size())
-        # print('size of deno', denominators) #.size())
         weighted_residuals = residuals / denominators
 
         return weighted_residuals
@@ -415,16 +332,7 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         bvs_0_hat: torch.Tensor,
         covariances_1: torch.Tensor,
     ) -> torch.Tensor:
-        # print('translation', translation)
-        # print('rotations', rotations)
-        # print('bvs_0_hat', bvs_0_hat)
-        # print('covariances_1', covariances_1)
-        # print('denominator_wo_square', torch.einsum(
-        #     "j,B...ji,i->B...",
-        #     translation,
-        #     self.epipolar_normal_covariance(self.opt, rotations, bvs_0_hat, covariances_1),
-        #     translation,
-        #     ))
+
         return torch.sqrt(
             torch.einsum(
             "j,B...ji,i->B...",
@@ -449,15 +357,10 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         )
 
     def skew(self, opt, vector: torch.Tensor) -> torch.Tensor:
-        r"""Return skew of a single/multple vectors
+        """Return skew of a single/multple vectors
         The skew of a vector is defined by
-
-        :math:`\hat{v} =`
-        :math:`\bar{x}_k = \sum_{i=1}^{n_k}x_{ik}`
-
         Args:
             vector (torch.Tensor): vector or vectors of size ..., 3
-
         Returns:
             torch.Tensor: skew symmetric matrix/matrices of size ..., 3
         """
