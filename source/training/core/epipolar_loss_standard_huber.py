@@ -188,11 +188,6 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         epi_constraint=True
         if epi_constraint:
             E = self.compute_essential_matrix(self.opt, pose_w2c_self, pose_w2c_other)
-            # pts_self_repr_in_other, depth_self_repr_in_other = batch_project_to_other_img(
-            #     pixels_in_self.float(), di=depth_rendered_self,
-            #     Ki=intr_self, Kj=intr_other, T_itoj=T_self2other, return_depth=True)
-            # pts_self_repr_in_other_h = torch.cat([pts_self_repr_in_other, torch.ones(len(pts_self_repr_in_other), 1, device='cuda:0')], dim =-1)
-            
             mean_x_self = pixels_in_self[:, 0].mean()
             mean_y_self = pixels_in_self[:, 1].mean()
             std_x_self = pixels_in_self[:, 0].std()
@@ -206,65 +201,22 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
             pixels_in_self_h = torch.cat([pixels_in_self, torch.ones(len(pixels_in_self), 1, device='cuda:0')], dim =-1)
             pixels_in_self_h[:, 0] = (pixels_in_self_h[:, 0] - mean_x_self) / std_x_self
             pixels_in_self_h[:, 1] = (pixels_in_self_h[:, 1] - mean_y_self) / std_y_self
-            #print(pixels_in_self_h.size())
-            
-            #pixels_in_self_h[:, 0] = pixels_in_self_h[:, 0] / H
-            #pixels_in_self_h[:, 1] = pixels_in_self_h[:, 1] / W
-            
-            ####print("pts_self_repr_in_other: ", pts_self_repr_in_other_h.size(), " E: ", E.size(), " pixels_in_self: ", pixels_in_self_h.size())
-            
-            # epipolar_constraints_self = [torch.dot(pts_self_repr_in_other_h[i, :], torch.matmul(E, pixels_in_self_h[i, :])) for i in range(pixels_in_self_h.shape[0])]
-            #####loss_epi_self = torch.dot(pts_self_repr_in_other, torch.matmul(E, pixels_in_self))
-            #####loss_epi_self = loss_epi_self.mean()
-            # epipolar_constraints_self = torch.stack(epipolar_constraints_self)
-            # loss_epi_self = torch.mean(epipolar_constraints_self)
 
-            # pts_other_repr_in_self, depth_other_repr_in_self = batch_project_to_other_img(
-            #     pixels_in_other.float(), di=depth_rendered_other,
-            #     Ki=intr_other, Kj=intr_self, T_itoj=pose_inverse_4x4(T_self2other), return_depth=True)
-            # pts_other_repr_in_self_h = torch.cat([pts_other_repr_in_self, torch.ones(len(pts_other_repr_in_self), 1, device='cuda:0')], dim =-1)
             pixels_in_other_h = torch.cat([pixels_in_other, torch.ones(len(pixels_in_other), 1, device='cuda:0')], dim =-1)
             pixels_in_other_h[:, 0] = (pixels_in_other_h[:, 0] - mean_x_other) / std_x_other
             pixels_in_other_h[:, 1] = (pixels_in_other_h[:, 1] - mean_y_other) / std_y_other
             
-            #pixels_in_other_h[:, 0] = pixels_in_other_h[:, 0] / H
-            #pixels_in_other_h[:, 1] = pixels_in_other_h[:, 1] / W
-            #K = torch.tensor([[H, 0, 0], [0, W, 0], [0, 0, 1]], dtype=torch.float32, device='cuda:0')
-            #K_inv = torch.inverse(K)
-            #E_prime = K_inv.T @ E @ K_inv
-
-            #####print("pts_self_repr_in_other: ", pts_other_repr_in_self.size(), " E: ", E.size(), " pixels_in_self: ", pixels_in_other.size())
-
-            # epipolar_constraints_other = [torch.dot(pixels_in_other_h[i, :], torch.matmul(E, pts_other_repr_in_self_h[i, :])) for i in range(pixels_in_other_h.shape[0])]
-            #####loss_epi_other = torch.dot(pixels_in_other, torch.matmul(E, pts_other_repr_in_self))
-            #####loss_epi_other = loss_epi_other.mean()
-            # epipolar_constraints_other = torch.stack(epipolar_constraints_other)
-            # loss_epi_other = torch.mean(epipolar_constraints_other)
-
-            ###
-            #print('other: ', pixels_in_other_h)
-            #print('self: ', pixels_in_self_h)
-            #print('E ', E)
             epipolar_constraints_real = [torch.dot(pixels_in_other_h[i, :], torch.matmul(E, pixels_in_self_h[i, :])) for i in range(pixels_in_other_h.shape[0])]
             epipolar_constraints_real = torch.stack(epipolar_constraints_real)
-            #print('epipolar_constrints: ', epipolar_constraints_real.size())
-            #print('conf_values: ', conf_values)
+
             epipolar_constraints_real = epipolar_constraints_real
-            #print('epipolar_constrints: ', conf_values[:, 0])
-            #print('epipolar_constrints: ', epipolar_constraints_real.size())
-            
-            #loss_epi_real = torch.mean(epipolar_constraints_real)
-            ###
 
             epi_zeros = torch.zeros_like(epipolar_constraints_real)
-            #loss_epi =(epipolar_constraints_real) #(-epipolar_constraints_real) #
+
             loss_epi = torch.nn.functional.huber_loss(epipolar_constraints_real, epi_zeros, reduction='none', delta=1.) * conf_values[:, 0] # -loss_epi_real
             loss_epi_sum = loss_epi.sum()/(loss_epi.nelement() + 1e-6)
 
-            #print(loss_epi_self)
-            #print(loss_epi_other)
-            #print(loss_epi)
-            loss_dict['epipolar'] += loss_epi_sum #loss_epi
+            loss_dict['epipolar'] += loss_epi_sum 
 
 
         if 'depth_fine' in ret_other.keys():
@@ -306,7 +258,6 @@ class CorrespondencesPairRenderDepthAndGet3DPtsAndReprojectAndEpipolar(EpipolarB
         t = t_other - torch.matmul(R, t_self)
 
         # Construct the essential matrix from R and t
-        #t_x = torch.array([[0, -t[2], t[1]], [t[2], 0, -t[0]], [-t[1], t[0], 0]])
         t = torch.tensor([t[0], t[1], t[2]], device='cuda:0')  # Assuming t is a list or array of length 3
         t_x = torch.zeros((3, 3))
         t_x[0, 1], t_x[0, 2], t_x[1, 0], t_x[1, 2], t_x[2, 0], t_x[2, 1] = -t[2], t[1], t[2], -t[0], -t[1], t[0]
